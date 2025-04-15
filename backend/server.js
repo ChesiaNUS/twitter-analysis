@@ -2,7 +2,7 @@ import express from "express";
 import OpenAI from "openai";
 import bodyParser from "body-parser";
 import cors from "cors";
-import timeout from "connect-timeout";
+// import timeout from "connect-timeout";
 
 console.log("Starting server.js...");
 
@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 });
 
 // Timeout middleware
-app.use(timeout("30s"));
+// app.use(timeout("30s"));
 app.use((req, res, next) => {
   if (!req.timedout) next();
 });
@@ -64,22 +64,36 @@ app.post("/analyze", async (req, res) => {
         const completion = await openai.chat.completions.create({
           model: "deepseek-chat",
           messages: [
-            { role: "system", content: "You are a helpful assistant that analyzes tweets." },
-            { role: "user", content: JSON.stringify({ data: chunk, keyword, referenceTweet }) }
+            {
+              role: "system",
+              content:
+              " You are an expert content writer specializing in Web3 and social media communication. I've provided a file containing tweets from the past three days discussing Web3. Your task is to analyze these tweets to identify the top concerns people express about Web3, such as specific projects (e.g., Ethereum, Solana) or areas (e.g., DeFi, NFTs, DAOs). Based on this analysis, generate exactly three tweets that summarize these concerns. Each tweet should: Address a distinct concern or aspect of Web3.Be concise, professional, and engaging, with a tone that's informative yet approachable to a broad audience. Use clear, polished language suitable for a Web3-savvy audience, avoiding jargon overload. Fit within Twitter's 280-character limit. Highlight trends or insights from the data without directly quoting the input tweets. Return a JSON object with a key 'generatedTweets' containing an array of exactly three tweet objects. Each tweet object must have a 'content' property with the generated tweet text."
+            },
+            {
+              role: "user",
+              content: JSON.stringify({ data: chunk, keyword, referenceTweet })
+            }
           ]
         });
 
         // The expected response is in the form of a JSON string from the API.
-        const messageContent = completion.choices[0].message.content;
-        console.log(`Received response for chunk ${i + 1}:`, messageContent);
+        const rawResponse = completion.choices[0].message.content;
+        console.log(`Received raw response for chunk ${i + 1}:`, rawResponse);
+
+         // Remove markdown code block markers if present
+         let jsonString = rawResponse.trim();
+         if (jsonString.startsWith("```")) {
+           jsonString = jsonString.replace(/^```(json)?\n/, "").replace(/```$/, "").trim();
+         }
 
         // Attempt to parse the response as JSON.
         let analysisResult;
         try {
-          analysisResult = JSON.parse(messageContent);
+          analysisResult = JSON.parse(jsonString);
         } catch (parseError) {
           console.error("Error parsing JSON from deepseek response:", parseError.message);
-          continue; // Skip this chunk if parsing fails
+          // Skip this chunk if parsing fails
+          continue;
         }
 
         // Assuming the response includes an array "generatedTweets"
