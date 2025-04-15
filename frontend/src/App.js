@@ -31,6 +31,7 @@ function App() {
         jsonData[0].hasOwnProperty("tweet_time") &&
         jsonData[0].hasOwnProperty("tweet_text")
       ) {
+        console.log(jsonData)
         setFileData(jsonData);
       } else {
         alert("文件格式不正确，请确保包含 user_screen_name, tweet_time, tweet_text 列！");
@@ -41,7 +42,7 @@ function App() {
 
   const analyzeTweets = async () => {
     if (!fileData) {
-      alert("请先上传文件！");
+      alert("Please upload a file first!");
       return;
     }
 
@@ -142,7 +143,7 @@ function App() {
           Analyze
         </button>
 
-        {loading && <p className="text-blue-500">正在分析推文，请稍候...</p>}
+        {loading && <p className="text-blue-500"> Analyzing...</p>}
 
         {/* Output */}
         {generatedTweets.length > 0 && (
@@ -187,7 +188,7 @@ function App() {
                 className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4"
               >
                 <p className="text-gray-700">{item.content}</p>
-                <p className="text-sm text-gray-500">评分: {item.rating}</p>
+                <p className="text-sm text-gray-500">Rate: {item.rating}</p>
               </div>
             ))}
           </div>
